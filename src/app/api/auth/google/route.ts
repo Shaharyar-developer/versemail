@@ -1,11 +1,11 @@
 import { google } from "googleapis";
 import { redirect } from "next/navigation";
-import { PageUrl } from "@/lib/utils";
+import { pageUrl } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 export async function GET(req: NextRequest, res: NextResponse) {
   const authClient = new google.auth.OAuth2({
-    redirectUri: PageUrl() + "/api/auth/google/",
+    redirectUri: pageUrl + "/api/auth/google/",
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   });
