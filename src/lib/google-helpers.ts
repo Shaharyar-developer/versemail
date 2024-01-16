@@ -6,7 +6,7 @@ import { pageUrl } from "./utils";
 export async function GoogleClient() {
   const access_tokens = cookies().get("googleTokens");
   if (!access_tokens) {
-    redirect(pageUrl + "/api/auth/google");
+    redirect(pageUrl + "/app");
   }
   const credentials = JSON.parse(access_tokens?.value!) as Credentials;
   const expiry = credentials.expiry_date;
