@@ -9,5 +9,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 export const pageUrl =
   process.env.NODE_ENV === "production"
-    ? "https://www.versemail.vercel.app"
+    ? "https://versemail.vercel.app"
     : "http://localhost:3000";
