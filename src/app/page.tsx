@@ -15,20 +15,22 @@ export default async function Home() {
   const { res, getRecentEmails, getUser, getAllEmailsLenght } = await useGmail(
     client
   );
+  const mails = await getRecentEmails(10);
   const user = await getUser();
+  const lenght = await getAllEmailsLenght();
 
   return (
     <main className=" min-h-[90svh]">
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20}>
           <Suspense fallback={<Skeleton />}>
-            <Sidebar email={user.data.emailAddress || "Unknown"} />
+            <Sidebar email={user?.data?.emailAddress || "Unknown"} />
           </Suspense>
         </ResizablePanel>
         <ResizableHandle className="" />
         <ResizablePanel defaultSize={34} defaultChecked>
           <Suspense fallback={<Skeleton />}>
-            <Inbox allMailLenght={await getAllEmailsLenght()} />
+            <Inbox messages={mails || []} />
           </Suspense>
         </ResizablePanel>
         <ResizableHandle className="" />

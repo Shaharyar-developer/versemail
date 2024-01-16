@@ -1,4 +1,4 @@
-import { google, Auth } from "googleapis";
+import { google, Auth, gmail_v1 } from "googleapis";
 
 export async function useGmail(client: Auth.OAuth2Client) {
   const gmail = google.gmail({ version: "v1", auth: client });
@@ -6,10 +6,22 @@ export async function useGmail(client: Auth.OAuth2Client) {
     userId: "me",
     auth: client,
   });
-  const getRecentEmails = (amount: number) => {
+  const getRecentEmails = async (amount: number) => {
     if (res.data.messages) {
       const messages = res.data.messages.slice(0, amount);
-      return messages;
+      const emailPromises = messages.map((message) =>
+        gmail.users.messages.get({ userId: "me", id: message.id! })
+      );
+      const labelsResponse = await gmail.users.labels.list({ userId: "me" });
+      const labels = labelsResponse.data.labels || [];
+
+      const recentEmails = await Promise.all(emailPromises);
+      return recentEmails.map((email) => {
+        const emailLabels = email.data.labelIds?.map((labelId) =>
+          labels.find((label) => label.id === labelId)
+        );
+        return { ...email.data, labels: emailLabels };
+      });
     }
     return [];
   };
