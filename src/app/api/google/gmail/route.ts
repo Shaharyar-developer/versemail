@@ -16,5 +16,16 @@ export async function PUT(req: Request) {
   });
 }
 export async function DELETE(req: NextRequest) {
-  return NextResponse.json({});
+  const client = await GoogleClient();
+  const { deleteEmail } = await handleGmail(client);
+  try {
+    const body = await new Response(req.body).text();
+    const id = JSON.parse(body);
+    deleteEmail(id);
+  } catch (error) {
+    return NextResponse.json({ error: "No id provided" });
+  }
+  return NextResponse.json({
+    success: true,
+  });
 }

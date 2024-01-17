@@ -2,13 +2,14 @@ import { google, Auth, gmail_v1 } from "googleapis";
 
 export async function handleGmail(client?: Auth.OAuth2Client) {
   const gmail = google.gmail({ version: "v1", auth: client });
-  const res = await gmail.users.messages.list({
+  const emails = await gmail.users.messages.list({
     userId: "me",
     auth: client,
   });
+  const labels = await gmail.users.labels.list({ userId: "me" });
   const getRecentEmails = async (amount: number) => {
-    if (res.data.messages) {
-      const messages = res.data.messages.slice(0, amount);
+    if (emails.data.messages) {
+      const messages = emails.data.messages.slice(0, amount);
       const emailPromises = messages.map((message) =>
         gmail.users.messages.get({ userId: "me", id: message.id! })
       );
@@ -25,13 +26,18 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
     }
     return [];
   };
+
   const getUser = async () => {
     return await gmail.users.getProfile({ userId: "me" });
   };
   const getAllEmails = async () => {
-    const list = await gmail.users.messages.list({ userId: "me" });
-    const messages = list.data.messages;
-    // Probably use array of promises and dynamic logic here.
+    const messages = emails.data.messages!;
+    const emailPromises = messages.map((message) =>
+      gmail.users.messages.get({ userId: "me", id: message.id! })
+    );
+    // yield emails one by one
+    const labelPromise = labels.data.labels || [];
+    return { ...emailPromises, ...labelPromise };
   };
   const getAllEmailsLenght = async () => {
     const list = await gmail.users.messages.list({ userId: "me" });
@@ -46,12 +52,19 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
       },
     });
   };
+  const deleteEmail = async (id: string) => {
+    await gmail.users.messages.delete({
+      userId: "me",
+      id,
+    });
+  };
   return {
-    res,
+    emails,
     getRecentEmails,
     getUser,
     getAllEmails,
     getAllEmailsLenght,
     setRead,
+    deleteEmail,
   };
 }

@@ -34,14 +34,12 @@ type categories =
   | "promotions"
   | "updates"
   | "forums"
-  | "";
+  | undefined;
 export const Sidebar = ({ email }: { email: string }) => {
   const [box, setBox] = useQueryState<Box>("box", {
-    defaultValue: "inbox",
     parse: (value: string) => value as Box,
   });
   const [category, setCategory] = useQueryState<categories>("category", {
-    defaultValue: "",
     parse: (value: string) => value as categories,
   });
   const [isMobile, setIsMobile] = useState(false);
@@ -172,7 +170,7 @@ export const Sidebar = ({ email }: { email: string }) => {
               category ? " opacity-100" : "opacity-0"
             }`}
           >
-            <Button onClick={() => setCategory("")} className="w-full">
+            <Button onClick={() => setCategory(null)} className="w-full">
               Clear Filters
             </Button>
           </div>

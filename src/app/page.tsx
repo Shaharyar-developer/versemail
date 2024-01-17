@@ -12,8 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 export default async function Home() {
   const client = await GoogleClient();
-  const { res, getRecentEmails, getUser, getAllEmailsLenght } =
-    await handleGmail(client);
+  const { getRecentEmails, getUser, getAllEmailsLenght } = await handleGmail(
+    client
+  );
   const mails = await getRecentEmails(10);
   const user = await getUser();
   const lenght = await getAllEmailsLenght();

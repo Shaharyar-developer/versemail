@@ -9,25 +9,56 @@ import { InboxCard } from "../inbox-card";
 export const InboxClient = ({ messages }: { messages: GmailMessage[] }) => {
   const [mode, setMode] = useState<"all" | "unread">("all");
   const [box] = useQueryState("box");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [_, setRefreshKey] = useState(0);
+  const [messagesState, setMessagesState] = useState(messages);
   const handleRead = async (id: string) => {
     console.log(id);
 
     try {
-      const res = await fetch("/api/google/gmail", {
+      fetch("/api/google/gmail", {
         method: "PUT",
+        body: JSON.stringify(id),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      setMessagesState((prev) =>
+        prev.map((message) => {
+          if (message.id === id) {
+            return {
+              ...message,
+              labels: message.labels?.map((label) => {
+                if (label?.id === "UNREAD") {
+                  return {
+                    ...label,
+                    id: "",
+                    name: "",
+                  };
+                }
+                return label;
+              }),
+            };
+          }
+          return message;
+        })
+      );
+
+      setRefreshKey((prev) => prev + 1);
+    } catch (e: unknown) {
+      console.log(e);
+    }
+  };
+  const handleDelete = async (id: string) => {
+    console.log(id);
+
+    try {
+      const res = await fetch("/api/google/gmail", {
+        method: "DELETE",
         body: JSON.stringify(id),
       });
       const data = await res.json();
-      messages
-        .find((message) => message.id === id)!
-        .labels?.forEach((label) => {
-          if (label!.id === "UNREAD") {
-            label!.id = "";
-            label!.name = "";
-          }
-        });
       setRefreshKey((prev) => prev + 1);
+      setMessagesState((prev) => prev.filter((message) => message.id !== id));
     } catch (e: unknown) {
       console.log(e);
     }
@@ -48,9 +79,14 @@ export const InboxClient = ({ messages }: { messages: GmailMessage[] }) => {
         </Tabs>
       </div>
       <div className="max-h-[90svh] overflow-y-auto">
-        {messages.map((message) => (
+        {messagesState.map((message) => (
           <div key={message.id}>
-            <InboxCard handleRead={handleRead} mode={mode} message={message} />
+            <InboxCard
+              handleDelete={handleDelete}
+              handleRead={handleRead}
+              mode={mode}
+              message={message}
+            />
           </div>
         ))}
       </div>

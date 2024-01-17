@@ -9,17 +9,32 @@ import type { GmailMessage } from "@/lib/types";
 import { format } from "date-fns";
 import { Badge } from "./ui/badge";
 import { useQueryState } from "nuqs";
+import { Button } from "./ui/button";
+import { Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 export const InboxCard = ({
   message,
   mode,
   handleRead,
+  handleDelete,
 }: {
   message: GmailMessage;
   mode: "all" | "unread";
   handleRead: (id: string) => Promise<void>;
+  handleDelete: (id: string) => Promise<void>;
 }) => {
+  const [read, setRead] = useState(true);
   const [box] = useQueryState("box");
   const [category] = useQueryState("category");
+
+  const labels = message.labels?.map((label) => label?.name?.toLowerCase());
+  useEffect(() => {
+    if (labels?.includes("unread")) {
+      setRead(false);
+    } else {
+      setRead(true);
+    }
+  }, [labels]);
   const from =
     message?.payload?.headers
       ?.find((header) => header.name === "From")
@@ -34,7 +49,7 @@ export const InboxCard = ({
   if (mode === "unread" && !message.labelIds?.includes("UNREAD")) {
     return null;
   }
-  const labels = message.labels?.map((label) => label?.name?.toLowerCase());
+
   const categories = message.labels?.map((label) =>
     label?.name?.replace("CATEGORY_", "").toLowerCase()
   );
@@ -44,9 +59,14 @@ export const InboxCard = ({
     if (category ? categories?.includes(category) : true) {
       return (
         <Card
-          onClick={() => (message.id ? handleRead(message.id) : null)}
-          className="hover:bg-accent transition-all  my-2 mx-2 rounded-md "
+          onClick={() => message.id && handleRead(message.id)}
+          className="hover:bg-accent relative transition-all  my-2 mx-2 rounded-md "
         >
+          {!read && (
+            <div className="flex justify-end absolute right-0 top-0">
+              <span className="h-[0.3rem] w-[0.3rem] bg-blue-400 m-4 rounded-full" />
+            </div>
+          )}
           <CardHeader className=" justify-between">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-semibold">{from || ""}</h1>
@@ -59,20 +79,34 @@ export const InboxCard = ({
           <CardContent
             className="text-secondary-foreground"
             dangerouslySetInnerHTML={{
-              __html: message && message.snippet!.substring(0, 150) + "...",
+              __html:
+                message && message?.snippet?.length! >= 150
+                  ? message.snippet! + "..."
+                  : message.snippet!,
             }}
           />
-          <CardFooter className="flex gap-2">
-            {message.labels?.map((label) => {
-              if (label?.name) {
-                const formattedLabel = label.name.replace("CATEGORY_", "");
-                return (
-                  <Badge key={label && label.id} className="capitalize">
-                    {formattedLabel.toLowerCase()}
-                  </Badge>
-                );
-              }
-            })}
+          <CardFooter className="flex justify-between">
+            <div className="flex gap-2">
+              {message.labels?.map((label) => {
+                if (label?.name && label?.name !== "UNREAD") {
+                  const formattedLabel = label.name.replace("CATEGORY_", "");
+                  return (
+                    <Badge key={label && label.id} className="capitalize">
+                      {formattedLabel.toLowerCase()}
+                    </Badge>
+                  );
+                }
+              })}
+            </div>
+            <Button
+              onClick={(event) => {
+                event.stopPropagation();
+                message.id && handleDelete(message.id);
+              }}
+              variant={"ghost"}
+            >
+              <Trash2 className="text-destructive" />
+            </Button>
           </CardFooter>
         </Card>
       );
