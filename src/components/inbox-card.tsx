@@ -8,7 +8,7 @@ import {
 import type { GmailMessage } from "@/lib/types";
 import { format } from "date-fns";
 import { Badge } from "./ui/badge";
-
+import { useQueryState } from "nuqs";
 export const InboxCard = ({
   message,
   mode,
@@ -18,6 +18,8 @@ export const InboxCard = ({
   mode: "all" | "unread";
   handleRead: (id: string) => Promise<void>;
 }) => {
+  const [box] = useQueryState("box");
+  const [category] = useQueryState("category");
   const from =
     message?.payload?.headers
       ?.find((header) => header.name === "From")
@@ -32,27 +34,48 @@ export const InboxCard = ({
   if (mode === "unread" && !message.labelIds?.includes("UNREAD")) {
     return null;
   }
-
-  return (
-    <Card
-      onClick={() => (message.id ? handleRead(message.id) : null)}
-      className="hover:bg-accent transition-all  my-2 mx-2 rounded-md "
-    >
-      <CardHeader className="flex justify-between">
-        <h1 className="text-2xl">{from || ""}</h1>
-        <h2 className="">{date?.value && format(date?.value, "PPP")}</h2>
-        <CardDescription>{subject?.value}</CardDescription>
-      </CardHeader>
-      <CardContent
-        className="text-secondary-foreground"
-        dangerouslySetInnerHTML={{ __html: message && message.snippet! }}
-      />
-      <CardFooter>
-        {message.labels?.map((label) => {
-          if (label?.name)
-            return <Badge key={label && label.id}>{label?.name}</Badge>;
-        })}
-      </CardFooter>
-    </Card>
+  const labels = message.labels?.map((label) => label?.name?.toLowerCase());
+  const categories = message.labels?.map((label) =>
+    label?.name?.replace("CATEGORY_", "").toLowerCase()
   );
+  console.log(categories);
+
+  if (box ? labels?.includes(box) : true) {
+    if (category ? categories?.includes(category) : true) {
+      return (
+        <Card
+          onClick={() => (message.id ? handleRead(message.id) : null)}
+          className="hover:bg-accent transition-all  my-2 mx-2 rounded-md "
+        >
+          <CardHeader className=" justify-between">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold">{from || ""}</h1>
+              <h2 className="font-normal">
+                {date?.value && format(date?.value, "PPP")}
+              </h2>
+            </div>
+            <CardDescription>{subject?.value}</CardDescription>
+          </CardHeader>
+          <CardContent
+            className="text-secondary-foreground"
+            dangerouslySetInnerHTML={{
+              __html: message && message.snippet!.substring(0, 150) + "...",
+            }}
+          />
+          <CardFooter className="flex gap-2">
+            {message.labels?.map((label) => {
+              if (label?.name) {
+                const formattedLabel = label.name.replace("CATEGORY_", "");
+                return (
+                  <Badge key={label && label.id} className="capitalize">
+                    {formattedLabel.toLowerCase()}
+                  </Badge>
+                );
+              }
+            })}
+          </CardFooter>
+        </Card>
+      );
+    }
+  }
 };

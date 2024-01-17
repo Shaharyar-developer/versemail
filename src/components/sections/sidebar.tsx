@@ -24,23 +24,51 @@ import { useMediaQuery } from "@/app/hooks/useMediaQuery";
 import { ModeToggle } from "../mode-toggle";
 import { Button } from "../ui/button";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryState } from "nuqs";
 
 import type { Box } from "@/lib/types";
-
+type categories =
+  | "shipping"
+  | "social"
+  | "promotions"
+  | "updates"
+  | "forums"
+  | "";
 export const Sidebar = ({ email }: { email: string }) => {
   const [box, setBox] = useQueryState<Box>("box", {
     defaultValue: "inbox",
     parse: (value: string) => value as Box,
   });
+  const [category, setCategory] = useQueryState<categories>("category", {
+    defaultValue: "",
+    parse: (value: string) => value as categories,
+  });
+  const [isMobile, setIsMobile] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setBox("inbox");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const isMobile = useMediaQuery("(max-width: 640px)");
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      if (ref.current) {
+        setIsMobile(ref.current.offsetWidth <= 200);
+      }
+    });
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <section className="flex flex-col min-h-[100svh] ">
+    <section ref={ref} className="flex flex-col min-h-[100svh] ">
       <div className="p-4 border-b h-16 flex  flex-row justify-between">
         <Select defaultValue={email}>
           <SelectTrigger className="max-w-max xl:w-[300px] xl:max-w-md ">
@@ -99,28 +127,62 @@ export const Sidebar = ({ email }: { email: string }) => {
           </Button>
         </div>
         <div className="p-2 flex flex-col gap-4">
-          <Button className="w-full gap-3 justify-start " variant={"ghost"}>
+          <Button
+            active={category === "social"}
+            onClick={() => setCategory("social")}
+            className="w-full gap-3 justify-start "
+            variant={"ghost"}
+          >
             <Users strokeWidth={1.4} /> {!isMobile && "Social"}
           </Button>
-          <Button className="w-full gap-3 justify-start " variant={"ghost"}>
+          <Button
+            active={category === "updates"}
+            onClick={() => setCategory("updates")}
+            className="w-full gap-3 justify-start "
+            variant={"ghost"}
+          >
             <AlertCircle strokeWidth={1.4} /> {!isMobile && "Updates"}
           </Button>
-          <Button className="w-full gap-3 justify-start " variant={"ghost"}>
+          <Button
+            active={category === "forums"}
+            onClick={() => setCategory("forums")}
+            className="w-full gap-3 justify-start "
+            variant={"ghost"}
+          >
             <MessagesSquare strokeWidth={1.4} /> {!isMobile && "Forums"}
           </Button>
-          <Button className="w-full gap-3 justify-start " variant={"ghost"}>
+          <Button
+            active={category === "shipping"}
+            onClick={() => setCategory("shipping")}
+            className="w-full gap-3 justify-start "
+            variant={"ghost"}
+          >
             <Package strokeWidth={1.4} /> {!isMobile && "Shipping"}
           </Button>
-          <Button className="w-full gap-3 justify-start " variant={"ghost"}>
+          <Button
+            active={category === "promotions"}
+            onClick={() => setCategory("promotions")}
+            className="w-full gap-3 justify-start "
+            variant={"ghost"}
+          >
             <Megaphone strokeWidth={1.4} /> {!isMobile && "Promotions"}
           </Button>
+          <div
+            className={`flex-grow justify-end flex-col transition-all flex ${
+              category ? " opacity-100" : "opacity-0"
+            }`}
+          >
+            <Button onClick={() => setCategory("")} className="w-full">
+              Clear Filters
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="border-t p-2 flex flex-col gap-4">
+      {/* <div className="border-t p-2 flex flex-col gap-4">
         <Button className="w-full gap-3 justify-start" variant={"ghost"}>
           <Settings /> Settings
         </Button>
-      </div>
+      </div> */}
     </section>
   );
 };
