@@ -1,4 +1,4 @@
-import { useGmail } from "./hooks/useGmail";
+import { handleGmail } from "./hooks/useGmail";
 import { GoogleClient } from "@/lib/google-helpers";
 import { Sidebar } from "@/components/sections/sidebar";
 import { Inbox } from "@/components/sections/inbox";
@@ -12,10 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 export default async function Home() {
   const client = await GoogleClient();
-  const { res, getRecentEmails, getUser, getAllEmailsLenght } = await useGmail(
-    client
-  );
-  const mails = await getRecentEmails(10);
+  const { res, getRecentEmails, getUser, getAllEmailsLenght } =
+    await handleGmail(client);
+  const mails = await getRecentEmails(50);
   const user = await getUser();
   const lenght = await getAllEmailsLenght();
 

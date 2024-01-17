@@ -1,6 +1,6 @@
 import { google, Auth, gmail_v1 } from "googleapis";
 
-export async function useGmail(client?: Auth.OAuth2Client) {
+export async function handleGmail(client?: Auth.OAuth2Client) {
   const gmail = google.gmail({ version: "v1", auth: client });
   const res = await gmail.users.messages.list({
     userId: "me",
@@ -37,12 +37,21 @@ export async function useGmail(client?: Auth.OAuth2Client) {
     const list = await gmail.users.messages.list({ userId: "me" });
     return list.data.resultSizeEstimate;
   };
-
+  const setRead = async (id: string) => {
+    await gmail.users.messages.modify({
+      userId: "me",
+      id,
+      requestBody: {
+        removeLabelIds: ["UNREAD"],
+      },
+    });
+  };
   return {
     res,
     getRecentEmails,
     getUser,
     getAllEmails,
     getAllEmailsLenght,
+    setRead,
   };
 }
