@@ -3,7 +3,7 @@ import { inspect } from "util";
 
 const imap = new Imap({
   user: "shaharyar321321@gmail.com",
-  password: "tedn kwjh ddyl bjgp",
+  password: "",
   host: "imap.gmail.com",
   port: 993,
   tls: true,
