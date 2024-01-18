@@ -73,7 +73,11 @@ export const MobileSidebar = ({ email }: { email: string }) => {
           <MenuIcon />
         </Button>
       </SheetTrigger>
-      <SheetContent ref={ref} className="flex flex-col min-h-[100svh]">
+      <SheetContent
+        side={"left"}
+        ref={ref}
+        className="flex flex-col min-h-[100svh]"
+      >
         <div className="p-4 border-b h-16 flex  flex-row justify-between">
           <Select defaultValue={email}>
             <SelectTrigger className="max-w-max xl:w-[300px] xl:max-w-md ">

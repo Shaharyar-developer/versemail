@@ -1,12 +1,9 @@
-"use client";
-import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
+import DevButton from "./dev-button";
+import { cookies } from "next/headers";
 export default function Page() {
-  return (
-    <>
-      App Currently In Devleopment{" "}
-      <Button onClick={() => (window.location.href = "/api/auth/google")}>
-        Login to continue
-      </Button>
-    </>
-  );
+  const creds = cookies().get("googleTokens");
+  if (!creds) {
+    return <DevButton />;
+  } else redirect("/");
 }
