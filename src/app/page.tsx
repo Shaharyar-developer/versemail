@@ -1,7 +1,8 @@
 import { handleGmail } from "./hooks/useGmail";
+import type { GmailMessage } from "@/lib/types";
 import { GoogleClient } from "@/lib/google-helpers";
 import { Sidebar } from "@/components/sections/sidebar";
-import { Inbox } from "@/components/sections/inbox";
+import Inbox from "@/components/sections/inbox";
 import { Mail } from "@/components/sections/mail";
 import {
   ResizablePanelGroup,
@@ -9,15 +10,11 @@ import {
   ResizablePanel,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 export default async function Home() {
   const client = await GoogleClient();
-  const { getRecentEmails, getUser, getAllEmailsLenght } = await handleGmail(
-    client
-  );
-  const mails = await getRecentEmails(10);
+  const { getUser } = await handleGmail(client);
   const user = await getUser();
-  const lenght = await getAllEmailsLenght();
 
   return (
     <main className=" min-h-[90svh]">
@@ -29,9 +26,7 @@ export default async function Home() {
         </ResizablePanel>
         <ResizableHandle className="" />
         <ResizablePanel defaultSize={34} defaultChecked>
-          <Suspense fallback={<Skeleton />}>
-            <Inbox messages={mails || []} />
-          </Suspense>
+          <Inbox />
         </ResizablePanel>
         <ResizableHandle className="" />
         <ResizablePanel defaultSize={46} defaultChecked>

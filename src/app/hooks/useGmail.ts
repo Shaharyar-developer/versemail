@@ -1,4 +1,5 @@
-import { google, Auth, gmail_v1 } from "googleapis";
+import { GmailMessage } from "@/lib/types";
+import { google, Auth } from "googleapis";
 
 export async function handleGmail(client?: Auth.OAuth2Client) {
   const gmail = google.gmail({ version: "v1", auth: client });
@@ -27,17 +28,34 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
     return [];
   };
 
+  const getAllEmails = async function* () {
+    const labelsResponse = await gmail.users.labels.list({ userId: "me" });
+    const labels = labelsResponse.data.labels || [];
+
+    if (emails.data.messages) {
+      for (let i = 0; i < emails.data.messages.length; i += 2) {
+        const emailPromises = emails.data.messages
+          .slice(i, i + 2)
+          .map((message) =>
+            gmail.users.messages.get({ userId: "me", id: message.id! })
+          );
+
+        const emailsBatch = await Promise.all(emailPromises);
+        yield emailsBatch.map((email) => {
+          const emailLabels = email.data.labelIds?.map((labelId) =>
+            labels.find((label) => label.id === labelId)
+          );
+          return { ...email.data, labels: emailLabels } as GmailMessage;
+        });
+      }
+    }
+  };
+  const getAllEmailIds = async () => {
+    const list = await gmail.users.messages.list({ userId: "me" });
+    return list.data.messages?.map((message) => message.id);
+  };
   const getUser = async () => {
     return await gmail.users.getProfile({ userId: "me" });
-  };
-  const getAllEmails = async () => {
-    const messages = emails.data.messages!;
-    const emailPromises = messages.map((message) =>
-      gmail.users.messages.get({ userId: "me", id: message.id! })
-    );
-    // yield emails one by one
-    const labelPromise = labels.data.labels || [];
-    return { ...emailPromises, ...labelPromise };
   };
   const getAllEmailsLenght = async () => {
     const list = await gmail.users.messages.list({ userId: "me" });
@@ -58,6 +76,9 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
       id,
     });
   };
+  const getEmail = async (id: string) => {
+    return gmail.users.messages.get({ userId: "me", id, format: "full" });
+  };
   return {
     emails,
     getRecentEmails,
@@ -66,5 +87,7 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
     getAllEmailsLenght,
     setRead,
     deleteEmail,
+    getAllEmailIds,
+    getEmail,
   };
 }

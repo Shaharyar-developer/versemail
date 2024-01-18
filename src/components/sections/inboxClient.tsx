@@ -1,19 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useQueryState } from "nuqs";
 import { GmailMessage } from "@/lib/types";
 import { InboxCard } from "../inbox-card";
-
-export const InboxClient = ({ messages }: { messages: GmailMessage[] }) => {
+export const InboxClient = () => {
   const [mode, setMode] = useState<"all" | "unread">("all");
   const [box] = useQueryState("box");
   const [_, setRefreshKey] = useState(0);
-  const [messagesState, setMessagesState] = useState(messages);
-  const handleRead = async (id: string) => {
-    console.log(id);
+  const [messagesState, setMessagesState] = useState<GmailMessage[]>([]);
+  useEffect(() => {
+    fetch("/api/google/gmail", { method: "GET" })
+      .then((response) => {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let data = "";
 
+        return reader
+          ?.read()
+          .then(function processText({
+            done,
+            value,
+          }): Promise<unknown> | undefined {
+            if (done) {
+              return;
+            }
+
+            data += decoder.decode(value, { stream: true });
+            let eventEnd = data.indexOf("\n\n");
+            while (eventEnd !== -1) {
+              const eventText = data.slice(0, eventEnd);
+              try {
+                const event: GmailMessage[] = JSON.parse(eventText);
+                setMessagesState((prev) => [...prev, ...event]);
+              } catch (e) {}
+              data = data.slice(eventEnd + 2);
+              eventEnd = data.indexOf("\n\n");
+            }
+
+            return reader.read().then(processText);
+          });
+      })
+      .catch(console.error);
+  }, []);
+  const handleRead = async (id: string) => {
     try {
       fetch("/api/google/gmail", {
         method: "PUT",
@@ -44,24 +75,17 @@ export const InboxClient = ({ messages }: { messages: GmailMessage[] }) => {
       );
 
       setRefreshKey((prev) => prev + 1);
-    } catch (e: unknown) {
-      console.log(e);
-    }
+    } catch (e: unknown) {}
   };
   const handleDelete = async (id: string) => {
-    console.log(id);
-
     try {
       const res = await fetch("/api/google/gmail", {
         method: "DELETE",
         body: JSON.stringify(id),
       });
-      const data = await res.json();
       setRefreshKey((prev) => prev + 1);
       setMessagesState((prev) => prev.filter((message) => message.id !== id));
-    } catch (e: unknown) {
-      console.log(e);
-    }
+    } catch (e: unknown) {}
   };
   return (
     <>
@@ -79,16 +103,17 @@ export const InboxClient = ({ messages }: { messages: GmailMessage[] }) => {
         </Tabs>
       </div>
       <div className="max-h-[90svh] overflow-y-auto">
-        {messagesState.map((message) => (
-          <div key={message.id}>
-            <InboxCard
-              handleDelete={handleDelete}
-              handleRead={handleRead}
-              mode={mode}
-              message={message}
-            />
-          </div>
-        ))}
+        {messagesState.length > 0 &&
+          messagesState.map((message, idx) => (
+            <div key={idx}>
+              <InboxCard
+                handleDelete={handleDelete}
+                handleRead={handleRead}
+                mode={mode}
+                message={message}
+              />
+            </div>
+          ))}
       </div>
     </>
   );

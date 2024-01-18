@@ -9,14 +9,11 @@ import type { GmailMessage } from "@/lib/types";
 import { format } from "date-fns";
 import { Badge } from "./ui/badge";
 import { useQueryState } from "nuqs";
-import { Button } from "./ui/button";
-import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 export const InboxCard = ({
   message,
   mode,
   handleRead,
-  handleDelete,
 }: {
   message: GmailMessage;
   mode: "all" | "unread";
@@ -26,6 +23,7 @@ export const InboxCard = ({
   const [read, setRead] = useState(true);
   const [box] = useQueryState("box");
   const [category] = useQueryState("category");
+  const [_, setSelectionId] = useQueryState("selectionId");
 
   const labels = message.labels?.map((label) => label?.name?.toLowerCase());
   useEffect(() => {
@@ -53,13 +51,15 @@ export const InboxCard = ({
   const categories = message.labels?.map((label) =>
     label?.name?.replace("CATEGORY_", "").toLowerCase()
   );
-  console.log(categories);
 
   if (box ? labels?.includes(box) : true) {
     if (category ? categories?.includes(category) : true) {
       return (
         <Card
-          onClick={() => message.id && handleRead(message.id)}
+          onClick={() => {
+            message.id && handleRead(message.id);
+            message.id && setSelectionId(message.id);
+          }}
           className="hover:bg-accent relative transition-all  my-2 mx-2 rounded-md "
         >
           {!read && (
@@ -85,28 +85,18 @@ export const InboxCard = ({
                   : message.snippet!,
             }}
           />
-          <CardFooter className="flex justify-between">
-            <div className="flex gap-2">
-              {message.labels?.map((label) => {
+          <CardFooter className="flex gap-2">
+            {message.labels?.map((label, idx) => {
+              if (label?.name !== "INBOX")
                 if (label?.name && label?.name !== "UNREAD") {
                   const formattedLabel = label.name.replace("CATEGORY_", "");
                   return (
-                    <Badge key={label && label.id} className="capitalize">
+                    <Badge key={idx} className="capitalize">
                       {formattedLabel.toLowerCase()}
                     </Badge>
                   );
                 }
-              })}
-            </div>
-            <Button
-              onClick={(event) => {
-                event.stopPropagation();
-                message.id && handleDelete(message.id);
-              }}
-              variant={"ghost"}
-            >
-              <Trash2 className="text-destructive" />
-            </Button>
+            })}
           </CardFooter>
         </Card>
       );

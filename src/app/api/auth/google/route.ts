@@ -28,9 +28,7 @@ export async function GET(req: NextRequest, res: NextResponse) {
         sameSite: "strict",
         path: "/",
       });
-    } catch (error) {
-      console.error("Error getting tokens:", error);
-    }
+    } catch (error) {}
   } else redirect(redirectUrl);
   return NextResponse.json({ code });
 }

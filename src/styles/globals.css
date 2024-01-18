@@ -96,3 +96,6 @@
     border-radius: 20px;
     border: 0
   }
+:root {
+  overflow-y: hidden;
+}
