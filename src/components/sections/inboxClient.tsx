@@ -5,9 +5,11 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useQueryState } from "nuqs";
 import { GmailMessage } from "@/lib/types";
 import { InboxCard } from "../inbox-card";
+import { Input } from "../ui/input";
 export const InboxClient = () => {
   const [mode, setMode] = useState<"all" | "unread">("all");
   const [box] = useQueryState("box");
+  const [query, setQuery] = useQueryState("query");
   const [_, setRefreshKey] = useState(0);
   const [messagesState, setMessagesState] = useState<GmailMessage[]>([]);
   useEffect(() => {
@@ -91,6 +93,13 @@ export const InboxClient = () => {
     <>
       <div className="p-4 border-b h-16 flex justify-between items-center">
         <h1 className="text-2xl capitalize">{box}</h1>
+        <div className="w-[60%]">
+          <Input
+            value={query || ""}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search Emails..."
+          />
+        </div>
         <Tabs defaultValue="all" className="">
           <TabsList>
             <TabsTrigger onClick={() => setMode("all")} value="all">

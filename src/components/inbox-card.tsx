@@ -23,6 +23,7 @@ export const InboxCard = ({
   const [read, setRead] = useState(true);
   const [box] = useQueryState("box");
   const [category] = useQueryState("category");
+  const [query] = useQueryState("query");
   const [_, setSelectionId] = useQueryState("selectionId");
 
   const labels = message.labels?.map((label) => label?.name?.toLowerCase());
@@ -44,6 +45,9 @@ export const InboxCard = ({
     (header) => header.name === "Subject"
   );
 
+  if (query && from?.toLowerCase().indexOf(query.toLowerCase()) === -1) {
+    return null;
+  }
   if (mode === "unread" && !message.labelIds?.includes("UNREAD")) {
     return null;
   }
