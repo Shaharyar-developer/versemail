@@ -47,6 +47,8 @@ export const InboxClient = () => {
       .catch(console.error);
   }, []);
   const handleRead = async (id: string) => {
+    console.log(messagesState.length);
+    
     try {
       fetch("/api/google/gmail", {
         method: "PUT",

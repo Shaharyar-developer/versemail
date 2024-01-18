@@ -79,6 +79,17 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
   const getEmail = async (id: string) => {
     return gmail.users.messages.get({ userId: "me", id, format: "full" });
   };
+  const getDrafts = async () => {
+    const list = await gmail.users.drafts.list({ userId: "me" });
+    const drafts = list.data.drafts?.map(async (draft) => {
+      const draftData = await gmail.users.drafts.get({
+        userId: "me",
+        id: draft.id!,
+      });
+      return draftData.data;
+    });
+    return drafts;
+  };
   return {
     emails,
     getRecentEmails,
@@ -89,5 +100,6 @@ export async function handleGmail(client?: Auth.OAuth2Client) {
     deleteEmail,
     getAllEmailIds,
     getEmail,
+    getDrafts,
   };
 }

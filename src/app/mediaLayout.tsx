@@ -6,13 +6,16 @@ import {
 } from "@/components/ui/resizable";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { Suspense } from "react";
+import { useQueryState } from "nuqs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MobileSidebar, Sidebar } from "@/components/sections/sidebar";
 import Inbox from "@/components/sections/inbox";
+import { Drafts } from "@/components/sections/drafts";
 import { Mail } from "@/components/sections/mail";
 
 export default function Media({ email }: { email: string }) {
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const [box] = useQueryState("box");
   if (!isMobile)
     return (
       <main className=" min-h-[90svh]">
@@ -24,7 +27,8 @@ export default function Media({ email }: { email: string }) {
           </ResizablePanel>
           <ResizableHandle className="" />
           <ResizablePanel defaultSize={34} defaultChecked>
-            <Inbox />
+            {box === "inbox" && <Inbox />}
+            {box === "drafts" && <Drafts />}
           </ResizablePanel>
           <ResizableHandle className="" />
           <ResizablePanel defaultSize={46} defaultChecked>
