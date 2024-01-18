@@ -53,7 +53,7 @@ export const Mail = () => {
     }
   }, [main]);
   return (
-    <section className="flex flex-col">
+    <section className="flex flex-col" hidden={mail ? false : true}>
       <div className="p-4 border-b h-16 flex justify-between items-center">
         <h1 className="text-2xl">{from[0]}</h1>
         <h1 className="text-md text-foreground/50">{from[1]}</h1>
