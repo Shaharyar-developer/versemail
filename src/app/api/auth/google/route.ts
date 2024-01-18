@@ -30,5 +30,5 @@ export async function GET(req: NextRequest, res: NextResponse) {
       });
     } catch (error) {}
   } else redirect(redirectUrl);
-  return NextResponse.json({ code });
+  return NextResponse.redirect(pageUrl);
 }
