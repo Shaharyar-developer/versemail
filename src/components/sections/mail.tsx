@@ -51,7 +51,7 @@ export const Mail = () => {
         (main?.join("") || "") +
         "</div>";
     }
-  }, [main]);
+  }, [main, styles]);
   return (
     <section className="flex flex-col" hidden={mail ? false : true}>
       <div className="p-4 border-b h-16 flex justify-between items-center">
