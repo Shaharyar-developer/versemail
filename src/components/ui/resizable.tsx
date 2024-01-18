@@ -2,21 +2,24 @@
 
 import { DragHandleDots2Icon } from "@radix-ui/react-icons"
 import * as ResizablePrimitive from "react-resizable-panels"
-
-import { cn } from "@/lib/utils"
+import { useMediaQuery } from "@/app/hooks/useMediaQuery";
+import { cn } from "@/lib/utils";
 
 const ResizablePanelGroup = ({
   className,
   ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) => (
-  <ResizablePrimitive.PanelGroup
-    className={cn(
-      "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
-      className
-    )}
-    {...props}
-  />
-)
+}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) => {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  return (
+    <ResizablePrimitive.PanelGroup
+      className={cn(
+        "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
+        className
+      )}
+      {...props}
+    />
+  );
+};
 
 const ResizablePanel = ResizablePrimitive.Panel
 

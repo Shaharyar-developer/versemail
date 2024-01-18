@@ -91,25 +91,26 @@ export const InboxClient = () => {
   };
   return (
     <>
-      <div className="p-4 border-b h-16 flex justify-between items-center">
+      <div className="p-4 border-b lg:h-16 flex flex-col lg:flex-row justify-between items-center gap-2 lg:gap-0">
         <h1 className="text-2xl capitalize">{box}</h1>
-        <div className="w-[60%]">
+        <div className="flex gap-4">
           <Input
             value={query || ""}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search Emails..."
           />
+
+          <Tabs defaultValue="all" className="">
+            <TabsList>
+              <TabsTrigger onClick={() => setMode("all")} value="all">
+                All
+              </TabsTrigger>
+              <TabsTrigger onClick={() => setMode("unread")} value="unread">
+                Unread
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-        <Tabs defaultValue="all" className="">
-          <TabsList>
-            <TabsTrigger onClick={() => setMode("all")} value="all">
-              All
-            </TabsTrigger>
-            <TabsTrigger onClick={() => setMode("unread")} value="unread">
-              Unread
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
       <div className="max-h-[90svh] overflow-y-auto">
         {messagesState.length > 0 &&

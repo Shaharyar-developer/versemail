@@ -92,7 +92,8 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    @apply bg-foreground;
+    z-index: 99999;
+    @apply bg-accent;
     border-radius: 20px;
     border: 0
   }
