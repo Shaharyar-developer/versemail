@@ -22,6 +22,7 @@ import {
 
 import { Button } from "../ui/button";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import { Share2, Trash, Trash2 } from "lucide-react";
 interface ShadowDOMProps {
   main: (string | undefined)[] | undefined;
   styles: string;
@@ -69,7 +70,6 @@ export const Mail = () => {
       setMail(() => {
         return data;
       });
-      console.log(data);
       toast.dismiss(load);
       setOpen(() => true);
     };
@@ -110,13 +110,23 @@ export const Mail = () => {
  
 `;
 
-  // ...
   if (!isMobile)
     return (
       <section className="flex flex-col" hidden={mail ? false : true}>
         <div className="p-4 border-b h-16 flex justify-between items-center">
           <h1 className="text-2xl">{from[0]}</h1>
-          <h1 className="text-md text-foreground/50">{from[1]}</h1>
+          <div
+            className={`${
+              selectionId ? "opacity-100 " : "opacity-0 "
+            } transition-all flex gap-2`}
+          >
+            <Button size={"sm"} variant={"outline"}>
+              <Share2 />
+            </Button>
+            <Button size={"sm"} variant={"outline"}>
+              <Trash2 />
+            </Button>
+          </div>
         </div>
         <ShadowDOM
           main={main}

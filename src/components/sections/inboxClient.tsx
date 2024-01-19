@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useQueryState } from "nuqs";
 import { GmailMessage, CombinedMails } from "@/lib/types";
+import { useCachedEmails } from "@/app/hooks/useCache";
 import { InboxCard } from "../inbox-card";
 import { Input } from "../ui/input";
 import { useScroll } from "framer-motion";
@@ -18,13 +19,22 @@ export const InboxClient = () => {
   const loading = useRef(false);
   const pageId = useRef<string | undefined>(undefined);
   const { scrollYProgress } = useScroll({ container: ref });
-
+  const { getEmails, setEmails } = useCachedEmails();
+  const setCachedMailsState = async () => {
+    const cachedMails = await getEmails();
+    if (!cachedMails) {
+      fetchMessages();
+    } else {
+      setMessagesState(cachedMails || []);
+      length.current = Math.floor((cachedMails?.length ?? 0) / 10) * 10;
+    }
+  };
   useEffect(() => {
-    fetchMessages();
+    setCachedMailsState();
   }, []);
 
   scrollYProgress.on("change", () => {
-    if (scrollYProgress.get() > 0.75) {
+    if (scrollYProgress.get() > 0.45) {
       fetchMessages();
     }
   });
@@ -55,6 +65,7 @@ export const InboxClient = () => {
 
       if (data?.emails?.length) {
         setMessagesState((prevMessages) => {
+          setEmails([...prevMessages, ...data.emails]);
           length.current = data.emails.length + prevMessages.length;
           return [...prevMessages, ...data.emails];
         });
@@ -66,7 +77,6 @@ export const InboxClient = () => {
         }
       }
     } catch (error) {
-      console.error(error);
     } finally {
       loading.current = false;
     }
@@ -76,18 +86,14 @@ export const InboxClient = () => {
     try {
       await markMessageAsRead(id);
       updateMessageInState(id, removeUnreadLabel);
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (error) {}
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteMessage(id);
       removeMessageFromState(id);
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (error) {}
   };
 
   const markMessageAsRead = async (id: string) => {

@@ -7,7 +7,6 @@ export const Drafts = () => {
     const res = await fetch("/api/google/gmail/drafts");
     const data = (await res.json()) as DraftMessage[];
     setDrafts(data);
-    console.log(data);
   };
   useEffect(() => {
     getDrafts();

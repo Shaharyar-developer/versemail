@@ -6,7 +6,6 @@ export async function POST(req: Request) {
   const { getMails } = await handleGmail(client);
   const body = await req.json();
   const { continueIndex, nextPageId } = body;
-  console.log(body);
 
   const emails = await getMails(continueIndex, nextPageId);
   return NextResponse.json(emails);

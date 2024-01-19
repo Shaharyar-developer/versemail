@@ -28,6 +28,7 @@
     "eventsource": "^2.0.2",
     "framer-motion": "^10.18.0",
     "googleapis": "^130.0.0",
+    "idb": "^8.0.0",
     "imap": "^0.8.19",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.310.0",
