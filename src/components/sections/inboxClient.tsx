@@ -1,96 +1,136 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { useQueryState } from "nuqs";
-import { GmailMessage } from "@/lib/types";
+import { GmailMessage, CombinedMails } from "@/lib/types";
 import { InboxCard } from "../inbox-card";
 import { Input } from "../ui/input";
+import { useScroll } from "framer-motion";
+
 export const InboxClient = () => {
   const [mode, setMode] = useState<"all" | "unread">("all");
   const [box] = useQueryState("box");
   const [query, setQuery] = useQueryState("query");
-  const [_, setRefreshKey] = useState(0);
   const [messagesState, setMessagesState] = useState<GmailMessage[]>([]);
+  const ref = useRef<HTMLDivElement>(null);
+  const length = useRef(0);
+  const loading = useRef(false);
+  const pageId = useRef<string | undefined>(undefined);
+  const { scrollYProgress } = useScroll({ container: ref });
+
   useEffect(() => {
-    fetch("/api/google/gmail", { method: "GET" })
-      .then((response) => {
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let data = "";
-
-        return reader
-          ?.read()
-          .then(function processText({
-            done,
-            value,
-          }): Promise<unknown> | undefined {
-            if (done) {
-              return;
-            }
-
-            data += decoder.decode(value, { stream: true });
-            let eventEnd = data.indexOf("\n\n");
-            while (eventEnd !== -1) {
-              const eventText = data.slice(0, eventEnd);
-              try {
-                const event: GmailMessage[] = JSON.parse(eventText);
-                setMessagesState((prev) => [...prev, ...event]);
-              } catch (e) {}
-              data = data.slice(eventEnd + 2);
-              eventEnd = data.indexOf("\n\n");
-            }
-
-            return reader.read().then(processText);
-          });
-      })
-      .catch(console.error);
+    fetchMessages();
   }, []);
-  const handleRead = async (id: string) => {
-    console.log(messagesState.length);
-    
-    try {
-      fetch("/api/google/gmail", {
-        method: "PUT",
-        body: JSON.stringify(id),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      setMessagesState((prev) =>
-        prev.map((message) => {
-          if (message.id === id) {
-            return {
-              ...message,
-              labels: message.labels?.map((label) => {
-                if (label?.id === "UNREAD") {
-                  return {
-                    ...label,
-                    id: "",
-                    name: "",
-                  };
-                }
-                return label;
-              }),
-            };
-          }
-          return message;
-        })
-      );
 
-      setRefreshKey((prev) => prev + 1);
-    } catch (e: unknown) {}
+  scrollYProgress.on("change", () => {
+    if (scrollYProgress.get() > 0.75) {
+      fetchMessages();
+    }
+  });
+
+  /**
+   * Fetches messages from the server.
+   *
+   * @returns {Promise<void>} A promise that resolves when the messages are fetched.
+   */
+  const fetchMessages = async () => {
+    if (loading.current) return;
+    loading.current = true;
+
+    try {
+      const res = await fetch("/api/google/mails", {
+        method: "POST",
+        body: JSON.stringify({
+          continueIndex: length.current,
+          nextPageId: pageId.current,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = (await res.json()) as CombinedMails;
+
+      if (data?.emails?.length) {
+        setMessagesState((prevMessages) => {
+          length.current = data.emails.length + prevMessages.length;
+          return [...prevMessages, ...data.emails];
+        });
+
+        if (length.current === data.length) {
+          pageId.current = data.nextPageId!;
+        } else {
+          pageId.current = undefined;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loading.current = false;
+    }
   };
+
+  const handleRead = async (id: string) => {
+    try {
+      await markMessageAsRead(id);
+      updateMessageInState(id, removeUnreadLabel);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch("/api/google/gmail", {
-        method: "DELETE",
-        body: JSON.stringify(id),
-      });
-      setRefreshKey((prev) => prev + 1);
-      setMessagesState((prev) => prev.filter((message) => message.id !== id));
-    } catch (e: unknown) {}
+      await deleteMessage(id);
+      removeMessageFromState(id);
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  const markMessageAsRead = async (id: string) => {
+    return fetch("/api/google/gmail", {
+      method: "PUT",
+      body: JSON.stringify(id),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  };
+
+  const deleteMessage = async (id: string) => {
+    return fetch("/api/google/gmail", {
+      method: "DELETE",
+      body: JSON.stringify(id),
+    });
+  };
+
+  const updateMessageInState = (
+    id: string,
+    updateFunction: (message: GmailMessage) => GmailMessage
+  ) => {
+    setMessagesState((prev) =>
+      prev.map((message) =>
+        message.id === id ? updateFunction(message) : message
+      )
+    );
+  };
+
+  const removeMessageFromState = (id: string) => {
+    setMessagesState((prev) => prev.filter((message) => message.id !== id));
+  };
+
+  const removeUnreadLabel = (message: GmailMessage): GmailMessage => {
+    return {
+      ...message,
+      labels: message.labels?.map((label) =>
+        label?.id === "UNREAD" ? { ...label, id: "", name: "" } : label
+      ),
+    };
+  };
+
   return (
     <>
       <div className="p-4 border-b lg:h-16 flex flex-col lg:flex-row justify-between items-center gap-2 lg:gap-0">
@@ -114,11 +154,12 @@ export const InboxClient = () => {
           </Tabs>
         </div>
       </div>
-      <div className="max-h-[90svh] overflow-y-auto">
+      <div ref={ref} className="max-h-[90svh] overflow-y-auto">
         {messagesState.length > 0 &&
           messagesState.map((message, idx) => (
             <div key={idx}>
               <InboxCard
+                fetchMessages={fetchMessages}
                 handleDelete={handleDelete}
                 handleRead={handleRead}
                 mode={mode}
@@ -126,6 +167,7 @@ export const InboxClient = () => {
               />
             </div>
           ))}
+        <div />
       </div>
     </>
   );

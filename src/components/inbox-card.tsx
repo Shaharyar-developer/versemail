@@ -14,11 +14,13 @@ export const InboxCard = ({
   message,
   mode,
   handleRead,
+  handleDelete,
 }: {
   message: GmailMessage;
   mode: "all" | "unread";
   handleRead: (id: string) => Promise<void>;
   handleDelete: (id: string) => Promise<void>;
+  fetchMessages: () => Promise<void>;
 }) => {
   const [read, setRead] = useState(true);
   const [box] = useQueryState("box");

@@ -14,4 +14,12 @@ export type Box = "inbox" | "sent" | "drafts" | "trash" | "archive";
 export type GmailMessage = gmail_v1.Schema$Message & {
   labels?: (gmail_v1.Schema$Label | undefined)[] | undefined;
 };
-export type DraftMessage = gmail_v1.Schema$Draft; 
+export type CombinedMails =
+  | {
+      emails: GmailMessage[];
+      nextPageId: string | null | undefined;
+      length: number | undefined;
+    }
+  | undefined;
+
+export type DraftMessage = gmail_v1.Schema$Draft;
