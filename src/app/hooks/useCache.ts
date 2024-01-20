@@ -13,7 +13,7 @@ export const useCachedEmails = () => {
     }
     const storedEmails = await getEmails();
     if (!storedEmails) {
-      const db = await openDB("myDatabase", 2, {
+      const db = await openDB("versemail", 2, {
         upgrade(db) {
           db.createObjectStore("emails");
         },
@@ -56,21 +56,43 @@ export const useCachedEmails = () => {
     }
 
     // Update IndexedDB
-    const db = await openDB("myDatabase", 2);
+    const db = await openDB("versemail", 2);
     await db.put("emails", mergedEmails, "emails");
   };
 
   const getEmails = async () => {
     if (typeof window === "undefined") return;
-    const db = await openDB("myDatabase", 2, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains("emails")) {
-          db.createObjectStore("emails");
-        }
-      },
-    });
-    const emails = await db.get("emails", "emails");
-    return (emails as GmailMessage[]) || [];
+    try {
+      const db = await openDB("versemail", 2, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("emails")) {
+            db.createObjectStore("emails");
+          }
+        },
+      });
+      const emails = await db.get("emails", "emails");
+      return (emails as GmailMessage[]) || [];
+    } catch (error) {
+      console.error("Error retrieving emails from IndexedDB:", error);
+      return [];
+    }
   };
-  return { setEmails, getEmails };
+
+  const setPageId = async (pageId: string) => {
+    try {
+      localStorage.setItem("pageId", pageId);
+    } catch (error) {
+      console.error("Error setting page ID in localStorage:", error);
+    }
+  };
+  const getPageId = async () => {
+    try {
+      const pageId = localStorage.getItem("pageId");
+      return pageId;
+    } catch (error) {
+      console.error("Error retrieving page ID from localStorage:", error);
+      return undefined;
+    }
+  };
+  return { setEmails, getEmails, setPageId, getPageId };
 };

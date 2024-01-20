@@ -3,10 +3,11 @@ import { handleGmail } from "@/app/hooks/useGmail";
 import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const client = await GoogleClient();
-  const { getMails } = await handleGmail(client);
+  const { getMails } = handleGmail(client);
   const body = await req.json();
-  const { continueIndex, nextPageId } = body;
+  let { continueIndex, nextPageId } = body;
 
   const emails = await getMails(continueIndex, nextPageId);
+
   return NextResponse.json(emails);
 }

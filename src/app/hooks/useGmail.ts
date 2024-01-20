@@ -95,7 +95,13 @@ export function handleGmail(client?: Auth.OAuth2Client) {
       },
     });
   };
-
+  const getNextPageId = async (pageId: string) => {
+    const list = await gmail.users.messages.list({
+      userId: "me",
+      pageToken: pageId,
+    });
+    return list.data.nextPageToken;
+  };
   const deleteEmail = (id: string) => {
     return gmail.users.messages.delete({
       userId: "me",
@@ -128,5 +134,6 @@ export function handleGmail(client?: Auth.OAuth2Client) {
     getEmail,
     getDrafts,
     getMails,
+    getNextPageId,
   };
 }

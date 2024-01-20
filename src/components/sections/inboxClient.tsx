@@ -15,22 +15,26 @@ export const InboxClient = () => {
   const [query, setQuery] = useQueryState("query");
   const [messagesState, setMessagesState] = useState<GmailMessage[]>([]);
   const ref = useRef<HTMLDivElement>(null);
-  const length = useRef(0);
-  const loading = useRef(false);
-  const pageId = useRef<string | undefined>(undefined);
   const { scrollYProgress } = useScroll({ container: ref });
-  const { getEmails, setEmails } = useCachedEmails();
-  const setCachedMailsState = async () => {
-    const cachedMails = await getEmails();
-    if (!cachedMails) {
-      fetchMessages();
-    } else {
-      setMessagesState(cachedMails || []);
-      length.current = Math.floor((cachedMails?.length ?? 0) / 10) * 10;
-    }
-  };
+  const { getEmails, setEmails, getPageId, setPageId } = useCachedEmails();
+  const length = useRef(0);
+  const pageId = useRef<string | undefined>();
+  const loading = useRef(false);
+  const nextPage = useRef(false);
+
+  // const setCachedMailsState = async () => {
+  //   const pageID = await getPageId();
+  //   pageId.current = pageID?.toString();
+  //   const cachedMails = await getEmails();
+  //   if (!cachedMails) {
+  //     fetchMessages();
+  //   } else {
+  //     setMessagesState(cachedMails || []);
+  //     length.current = cachedMails?.length;
+  //   }
+  // };
   useEffect(() => {
-    setCachedMailsState();
+    fetchMessages();
   }, []);
 
   scrollYProgress.on("change", () => {
@@ -39,15 +43,35 @@ export const InboxClient = () => {
     }
   });
 
-  /**
-   * Fetches messages from the server.
-   *
-   * @returns {Promise<void>} A promise that resolves when the messages are fetched.
-   */
+  // Helper function to handle response
+  const handleResponse = async (res: Response) => {
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = (await res.json()) as CombinedMails;
+    if (nextPage.current) {
+      pageId.current = data?.nextPageId!;
+    }
+    length.current = data?.emails?.length! + length.current;
+    if (data?.emails?.length) {
+      setMessagesState((prevMessages) => {
+        setEmails([...prevMessages, ...data.emails]);
+
+        return [...prevMessages, ...data.emails];
+      });
+    }
+  };
+
   const fetchMessages = async () => {
     if (loading.current) return;
     loading.current = true;
-
+    length.current === 100 && (length.current = 0);
+    if (length.current === 90) {
+      nextPage.current = true;
+    } else {
+      nextPage.current = false;
+    }
     try {
       const res = await fetch("/api/google/mails", {
         method: "POST",
@@ -57,26 +81,9 @@ export const InboxClient = () => {
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const data = (await res.json()) as CombinedMails;
-
-      if (data?.emails?.length) {
-        setMessagesState((prevMessages) => {
-          setEmails([...prevMessages, ...data.emails]);
-          length.current = data.emails.length + prevMessages.length;
-          return [...prevMessages, ...data.emails];
-        });
-
-        if (length.current === data.length) {
-          pageId.current = data.nextPageId!;
-        } else {
-          pageId.current = undefined;
-        }
-      }
+      await handleResponse(res);
     } catch (error) {
+      // Handle error
     } finally {
       loading.current = false;
     }
