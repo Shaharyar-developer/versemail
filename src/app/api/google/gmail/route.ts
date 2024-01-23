@@ -1,12 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { handleGmail } from "@/app/hooks/useGmail";
 import { GoogleClient } from "@/lib/google-helpers";
-import { Readable } from "stream";
-import { NextApiResponse } from "next";
-import { GmailMessage } from "@/lib/types";
-import EventSource from "eventsource";
-
-export const dynamic = "force-dynamic";
 
 export async function PUT(req: Request) {
   const client = await GoogleClient();

@@ -73,7 +73,7 @@ export const InboxClient = () => {
       nextPage.current = false;
     }
     try {
-      const res = await fetch("/api/google/mails", {
+      const res = await fetch("/api/google/gmail/mails", {
         method: "POST",
         body: JSON.stringify({
           continueIndex: length.current,

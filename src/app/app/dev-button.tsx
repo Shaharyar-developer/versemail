@@ -8,6 +8,10 @@ export default function DevButton() {
       <Button onClick={() => (window.location.href = "/api/auth/google")}>
         Login to continue
       </Button>
+      If you have already logged in.
+      <Button onClick={() => (window.location.href = "/")}>
+        Click here to continue
+      </Button>
     </>
   );
 }

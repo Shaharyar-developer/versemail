@@ -21,7 +21,6 @@ import {
   Users,
 } from "lucide-react";
 import { Sheet, SheetTrigger, SheetContent } from "../ui/sheet";
-import { useMediaQuery } from "@/app/hooks/useMediaQuery";
 import { ModeToggle } from "../mode-toggle";
 import { Button } from "../ui/button";
 
@@ -41,6 +40,10 @@ export const MobileSidebar = ({ email }: { email: string }) => {
   const [box, setBox] = useQueryState<Box>("box", {
     parse: (value: string) => value as Box,
   });
+  const [_, setSelectionId] = useQueryState("selectionId");
+  useEffect(() => {
+    setSelectionId(null);
+  }, [box]);
   const [category, setCategory] = useQueryState<categories>("category", {
     parse: (value: string) => value as categories,
   });
@@ -127,14 +130,6 @@ export const MobileSidebar = ({ email }: { email: string }) => {
             >
               <Trash2 strokeWidth={1.4} /> {!isMobile && "Trash"}
             </Button>
-            <Button
-              active={box === "archive"}
-              onClick={() => setBox("archive")}
-              className="w-full gap-3 justify-start "
-              variant={"ghost"}
-            >
-              <Archive strokeWidth={1.4} /> {!isMobile && "Archive"}
-            </Button>
           </div>
           <div className="p-2 flex flex-col gap-4">
             <Button
@@ -202,6 +197,10 @@ export const Sidebar = ({ email }: { email: string }) => {
   const [box, setBox] = useQueryState<Box>("box", {
     parse: (value: string) => value as Box,
   });
+  const [_, setSelectionId] = useQueryState("selectionId");
+  useEffect(() => {
+    setSelectionId(null);
+  }, [box]);
   const [category, setCategory] = useQueryState<categories>("category", {
     parse: (value: string) => value as categories,
   });
@@ -277,14 +276,6 @@ export const Sidebar = ({ email }: { email: string }) => {
             variant={"ghost"}
           >
             <Trash2 strokeWidth={1.4} /> {!isMobile && "Trash"}
-          </Button>
-          <Button
-            active={box === "archive"}
-            onClick={() => setBox("archive")}
-            className="w-full gap-3 justify-start "
-            variant={"ghost"}
-          >
-            <Archive strokeWidth={1.4} /> {!isMobile && "Archive"}
           </Button>
         </div>
         <div className="p-2 flex flex-col gap-4">
